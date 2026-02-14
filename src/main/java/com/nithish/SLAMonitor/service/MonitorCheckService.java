@@ -1,6 +1,7 @@
 package com.nithish.SLAMonitor.service;
 
 import com.nithish.SLAMonitor.DTO.MonitorCheckResponse;
+import com.nithish.SLAMonitor.DTO.SlaResponse;
 import com.nithish.SLAMonitor.model.Monitor;
 import com.nithish.SLAMonitor.model.MonitorCheck;
 import com.nithish.SLAMonitor.model.MonitorStatus;
@@ -147,5 +148,42 @@ public class MonitorCheckService {
         response.setErrorReason(monitorCheck.getErrorReason());
 
         return response;
+    }
+
+    public SlaResponse getSLAMetricsForMonitor(Long id, int range) {
+        LocalDateTime currentTime = LocalDateTime.now();
+        LocalDateTime startTime = currentTime.minusHours(range);
+
+        List<MonitorCheck> monitorChecksWithinRange = monitorCheckRepository.findByMonitor_IdAndCheckedAtAfter(id,startTime);
+        int totalChecks = monitorChecksWithinRange.size();
+        if(totalChecks == 0){
+            SlaResponse slaResponse = new SlaResponse();
+            slaResponse.setMonitorId(id);
+            slaResponse.setTotalChecks(totalChecks);
+            slaResponse.setUpChecks(0);
+            slaResponse.setDownChecks(0);
+            slaResponse.setUptimePercentage((double)100);
+            slaResponse.setRangeHours(range);
+            return slaResponse;
+        }
+        int upChecks = 0;
+        for( MonitorCheck monitor : monitorChecksWithinRange){
+            MonitorStatus monitorStatus = monitor.getStatus();
+            if( monitorStatus == MonitorStatus.UP || monitorStatus == MonitorStatus.DEGRADED){
+                upChecks++;
+            }
+        }
+        int downChecks = totalChecks - upChecks;
+        double totalUptime = (double) upChecks / totalChecks * 100;
+        // total uptime calculation
+        //uptime % = (successful checks / total checks) * 100
+        SlaResponse slaResponse = new SlaResponse();
+        slaResponse.setMonitorId(id);
+        slaResponse.setTotalChecks(totalChecks);
+        slaResponse.setUpChecks(upChecks);
+        slaResponse.setDownChecks(downChecks);
+        slaResponse.setUptimePercentage(totalUptime);
+        slaResponse.setRangeHours(range);
+        return slaResponse;
     }
 }

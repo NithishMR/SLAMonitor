@@ -1,6 +1,7 @@
 package com.nithish.SLAMonitor.controller;
 
 import com.nithish.SLAMonitor.DTO.MonitorCheckResponse;
+import com.nithish.SLAMonitor.DTO.SlaResponse;
 import com.nithish.SLAMonitor.service.MonitorCheckService;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,5 +32,8 @@ public class MonitorCheckController {
     ) {
         return monitorCheckService.getMonitorCheckHistory(id, limit);
     }
-
+    @GetMapping("/{id}/sla")
+    public SlaResponse getSLAMetricsForMonitor(@PathVariable Long id, @RequestParam(required=false, defaultValue="24") int range){
+        return monitorCheckService.getSLAMetricsForMonitor(id, range);
+    }
 }
